@@ -70,7 +70,14 @@ class MapGenerator:
                             x, y = x_, y_
         return M
     
+    def __validate(self):
+        return True
+    
     def generate(self):
-        world = - self.__maze(int(self.__env_size), int(self.__env_size), total_density=self.__obstacle_density).astype(int)
-        world = np.array(world)
+        validated = False
+        while not validated:
+            world = - self.__maze(int(self.__env_size), int(self.__env_size), total_density=self.__obstacle_density).astype(int)
+            world = np.array(world)
+            validated = self.__validate()
+
         return world

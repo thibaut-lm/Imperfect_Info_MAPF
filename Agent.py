@@ -5,12 +5,12 @@ from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 
 class Status(Enum):
+    MOVED = 0
     STANDED_STILL = 0
-    MOVED = 1
-    MOVED_TO_GOAL = 2
+    REACHING_GOAL = 2
     COLLIDED = 3
 
-class BroadcastAction(Enum):
+class AskingCommunicationAction(Enum):
     OFF = 0
     ON = 1
         
@@ -56,6 +56,16 @@ class Agent:
         self.__status: Status = None
         self.__reached_goal = False
         self.__world_knowledge = None
+        self.__communication_neighboors: list[Agent] = list()
+        
+    def get_communication_neighboors(self):
+        return self.__communication_neighboors
+    
+    def add_communication_neighboors(self, new_communication_neighbor):
+        self.__communication_neighboors.append(new_communication_neighbor)
+    
+    def reset_communication_neighboors(self):
+        self.__communication_neighboors = list()
 
     def init_knowledge(self, world_knowledge):
         self.__world_knowledge = world_knowledge
@@ -81,6 +91,9 @@ class Agent:
     def has_reached_goal(self):
         return self.__reached_goal
     
+    def on_goal(self):
+        return self.get_current_position() == self.get_goal_position()
+    
     def move(self, new_position:tuple, new_status:Status = None):
         self.__current_position = new_position
         self.__status = new_status
@@ -92,9 +105,17 @@ class Agent:
         self.__goal_position = new_goal_position
         self.__reached_goal = False
 
-    def path_to_goal(self, finder):
+    def path_to_goal_on_self_knowledge(self, finder, start_position=None, end_position=None):
         grid = Grid(matrix=1-self.__world_knowledge)
-        start = grid.node(self.get_current_position()[1], self.get_current_position()[0])
-        end = grid.node(self.get_goal_position()[1], self.get_goal_position()[0])
+        #swap x and y as the algorithm prints and computes in x = columns and y = lines
+        start = grid.node(self.get_current_position()[1], self.get_current_position()[0]) if start_position is None \
+        else grid.node(start_position[1], start_position[0])
+        
+        end = grid.node(self.get_goal_position()[1], self.get_goal_position()[0]) if end_position is None \
+        else grid.node(end_position[1], end_position[0])
+        
+        #path -> (y,x) that we have to swap back to (x,y)
         path, runs = finder.find_path(start, end, grid)
         return path
+    
+    
